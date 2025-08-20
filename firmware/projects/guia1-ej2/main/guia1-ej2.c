@@ -30,6 +30,7 @@
 /*==================[internal functions declaration]=========================*/
 
 /*==================[external functions definition]==========================*/
+
 void app_main(void){
 	uint8_t teclas;
 	LedsInit();
@@ -38,7 +39,7 @@ void app_main(void){
     	teclas  = SwitchesRead();
     	switch(teclas){
     		case SWITCH_1:
-    			LedToggle(LED_1); //togle cambia de estado
+    			LedToggle(LED_1); //toggle cambia de estado
     		break;
     		case SWITCH_2:
     			LedToggle(LED_2);
