@@ -67,7 +67,6 @@ void app_main(void){
         GPIOInit(bcdPins[i].pin, bcdPins[i].dir);
     }
 
-    // Mostrar el número x
     bcdToGpio(6, bcdPins);
 }
 /*==================[end of file]============================================*/

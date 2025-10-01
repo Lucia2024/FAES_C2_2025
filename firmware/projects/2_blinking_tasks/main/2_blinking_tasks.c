@@ -2,15 +2,15 @@
  *
  * \section genDesc General Description
  *
- * This example makes LED_1, LED_2 and LED_3 blink at different rates, using FreeRTOS tasks.
+ * This example makes LED_1, LED_2 and LED_3 blink at different rates, using FreeRTOS tasks. //TEMPLATE
  * 
  * @section changelog Changelog
  *
  * |   Date	    | Description                                    |
  * |:----------:|:-----------------------------------------------|
- * | 12/09/2023 | Document creation		                         |
+ * | 10/09/2025 | Document creation		                         |
  *
- * @author Albano Peñalva (albano.penalva@uner.edu.ar)
+ * @author Faes Lucia (luchiifaes@gmail.com)
  *
  */
 
@@ -34,7 +34,7 @@ static void Led1Task(void *pvParameter){
     while(true){
         printf("LED_1 ON\n");
         LedOn(LED_1);
-        vTaskDelay(CONFIG_BLINK_PERIOD_LED_1 / portTICK_PERIOD_MS);
+        vTaskDelay(CONFIG_BLINK_PERIOD_LED_1 / portTICK_PERIOD_MS); 
         printf("LED_1 OFF\n");
         LedOff(LED_1);
         vTaskDelay(CONFIG_BLINK_PERIOD_LED_1 / portTICK_PERIOD_MS);

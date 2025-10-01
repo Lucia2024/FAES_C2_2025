@@ -7,9 +7,9 @@
  * se almacene los n dígitos. La función deberá convertir el dato 
  * recibido a BCD, guardando cada uno de los dígitos de salida en el 
  * arreglo pasado como puntero.
- * Utilizamos punteros porque en C no podemos retornar mas de una variable con una funcion
+ * Dato: Utilizamos punteros porque en C no podemos retornar mas de una variable con una funcion
  * 
- * <a href="https://drive.google.com/...">Operation Example</a>
+ * 
  *
  * @section hardConn Hardware Connection
  *
@@ -31,8 +31,6 @@
 /*==================[inclusions]=============================================*/
 #include <stdio.h>
 #include <stdint.h>
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
 /*==================[macros and definitions]=================================*/
 
 /*==================[internal data definition]===============================*/
@@ -60,7 +58,7 @@ int8_t convertToBcdArray (uint32_t data, uint8_t digits, uint8_t * bcd_number)
     uint8_t count = 0;
 
     while (temp > 0) {
-        temp /= 10;
+        temp /= 10; //Descarta el bit menos significativo ya contado
         count++;
     }
     /* Si el número es 0 contamos 1 dígito */
@@ -79,17 +77,17 @@ int8_t convertToBcdArray (uint32_t data, uint8_t digits, uint8_t * bcd_number)
 
     // Paso 3: extraer dígitos desde el menos significativo
     for (int i = digits - 1; i >= 0; i--) {
-        bcd_number[i] = data % 10;
-        data /= 10;
+        bcd_number[i] = data % 10; //tomo el ult dígito de data
+        data /= 10; //corre el numero a la derecha
     }
 
-    return 0; // Éxito
+    return 0; 
 }
 
 void app_main(void) {
     uint32_t numero = 12345;       // Número a convertir
-    uint8_t digitos = 6;           // Cantidad de dígitos
-    uint8_t bcd[6];                // Arreglo de salida
+    uint8_t digitos = 5;           // Cantidad de dígitos
+    uint8_t bcd[digitos];          // Arreglo de salida
     int8_t resultado;
 
     resultado = convertToBcdArray(numero, digitos, bcd);

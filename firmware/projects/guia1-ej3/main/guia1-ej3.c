@@ -4,8 +4,12 @@
  *
  * Realice un función que reciba un puntero a una estructura LED como la que se muestra a continuación:
  *
- * <a href="https://drive.google.com/...">Operation Example</a>
- *
+ * struct leds {
+ * uint8_t mode; ON, OFF, TOGGLE 
+ * uint8_t n_led; indica el número de led a controlar 
+ * uint8_t n_ciclos; indica la cantidad de ciclos de encendido/apagado 
+ * uint16_t periodo; indica el tiempo de cada ciclo } my_leds;
+ * 
  * @section hardConn Hardware Connection
  *
  * |    Peripheral  |   ESP32   	|
@@ -70,7 +74,7 @@ void ledControl(leds_t * my_leds) {
             break;
 
         default:
-            // Modo inválido
+            // Estado invalido
             break;
     }
 }
@@ -82,10 +86,9 @@ void app_main(void) {
     my_leds.mode = LED_TOGGLE;
     my_leds.n_led = LED_1;
     my_leds.n_ciclos = 10;    // 10 ciclos
-    my_leds.periodo = 5000;    // PERIODO ms
+    my_leds.periodo = 5000;    // PERIODO ms, puse 5000 porque habia un problema con el osciloscopio
 
     ledControl(&my_leds);
 }
-
 
 /*==================[end of file]============================================*/

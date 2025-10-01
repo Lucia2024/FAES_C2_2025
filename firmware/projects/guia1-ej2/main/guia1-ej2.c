@@ -2,15 +2,17 @@
  *
  * \section genDesc General Description
  *
- * This example makes LED_1 and LED_2 blink if SWITCH_1 or SWITCH_2 are pressed.
+ * Modifique la aplicación 1_blinking_switch de manera de hacer titilar los leds 1 y 2 al mantener 
+ * presionada las teclas 1 y 2 correspondientemente. También se debe poder hacer titilar el led 3 al 
+ * presionar simultáneamente las teclas 1 y 2.
  *
  * @section changelog Changelog
  *
  * |   Date	    | Description                                    |
  * |:----------:|:-----------------------------------------------|
- * | 12/09/2023 | Document creation		                         |
+ * | 20/08/2025 | Document creation		                         |
  *
- * @author Albano Peñalva (albano.penalva@uner.edu.ar)
+ * @author Faes Lucia (luchifaess@gmail.com)
  *
  */
 

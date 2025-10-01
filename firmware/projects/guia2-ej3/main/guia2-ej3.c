@@ -2,8 +2,11 @@
  *
  * @section genDesc General Description
  *
- * Cree un nuevo proyecto en el que modifique la actividad del punto 1 de manera de utilizar interrupciones 
- * para el control de las teclas y el control de tiempos (Timers)
+ *Cree un nuevo proyecto en el que modifi que la actividad del punto 2 agregando ahora el puerto serie. 
+ *Envíe los datos de las mediciones para poder observarlos en un terminal en la PC, siguiendo el siguiente formato:
+ *● 3 dígitos ascii + 1 carácter espacio + dos caracteres para la unidad (cm) + cambio de línea “ \r\n”
+ *Además debe ser posible controlar la EDU-ESP de la siguiente manera:
+ *● Con las teclas “O” y “H”, replicar la funcionalidad de las teclas 1 y 2 de la EDU-ESP
  *
  * @section hardConn Hardware Connection
  *
@@ -16,16 +19,16 @@
  *
  * |   Date	    | Description                                    |
  * |:----------:|:-----------------------------------------------|
- * | 24/09/2025 | Document creation		                         |
+ * | 1/10/2025 | Document creation		                         |
  *
  * @author Faes Lucia (luchifaess@gmail.com)
  *
  */
-
 /*==================[inclusions]=============================================*/
 #include <stdio.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include <string.h>
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "timer_mcu.h"
@@ -33,9 +36,11 @@
 #include "switch.h"
 #include "lcditse0803.h"
 #include "hc_sr04.h"
+#include "uart_mcu.h"
 
 /*==================[macros and definitions]=================================*/
-#define MEDICION_PERIOD_US   1000   /**< Período de medición: 1 segundo */
+#define MEDICION_PERIOD_US   1000000   /**< Período de medición: 1 segundo (en us) */
+#define UART_BAUDRATE        115200    /**< Velocidad de transmisión UART */
 
 /*==================[internal data definition]===============================*/
 volatile bool medir = false;     /**< Flag: habilita/inhibe la medición */
@@ -44,45 +49,21 @@ uint16_t distancia = 0;          /**< Última distancia medida en cm */
 TaskHandle_t medir_task_handle = NULL; /**< Handle de la tarea de medición */
 
 /*==================[internal functions declaration]=========================*/
-/**
- * @brief Callback asociado a la tecla TEC1 (SWITCH_1).
- * Alterna el estado de la bandera "medir".
- */
 void CallbackTec1(void *args);
-
-/**
- * @brief Callback asociado a la tecla TEC2 (SWITCH_2).
- * Alterna el estado de la bandera "hold".
- */
 void CallbackTec2(void *args);
-
-/**
- * @brief Callback asociado al timer de medición.
- * Notifica a la tarea de medición para que ejecute la lectura.
- */
 void FuncTimerMedicion(void* param);
-
-/**
- * @brief Tarea encargada de realizar la medición con el sensor
- * ultrasónico y mostrarla en el display LCD.
- */
 static void MedirDistanciaTask(void *pvParameter);
-
-/**
- * @brief Tarea encargada de controlar el encendido/apagado de los LEDs
- * según la distancia medida.
- */
-/*static void ControlLedsTask(void *pvParameter);
+static void UartTask(void *pvParameter);
 
 /*==================[internal functions definition]==========================*/
 void CallbackTec1(void *args){
     medir = !medir;   // Activa o detiene la medición
-	LedOn(LED_1);
+    LedOn(LED_1);
 }
 
 void CallbackTec2(void *args){
     hold = !hold;     // Congela o libera el resultado
-	LedOn(LED_2);
+    LedOn(LED_2);
 }
 
 void FuncTimerMedicion(void* param){
@@ -102,27 +83,33 @@ static void MedirDistanciaTask(void *pvParameter){
         }
     }
 }
-/*
-static void ControlLedsTask(void *pvParameter){
+
+/**
+ * @brief Tarea que envía la distancia por UART y recibe comandos desde la PC
+ */
+static void UartTask(void *pvParameter){
+    char msg[32];
+    uint8_t rxByte;
+
     while(true){
-		if(medir && !hold){
-            // Encendido de LEDs según el rango de distancia
-            if(distancia < 10){
-                LedOff(LED_1); LedOff(LED_2); LedOff(LED_3);
-            } else if(distancia < 20){
-                LedOn(LED_1); LedOff(LED_2); LedOff(LED_3);
-            } else if(distancia < 30){
-                LedOn(LED_1); LedOn(LED_2); LedOff(LED_3);
-            } else {
-                LedOn(LED_1); LedOn(LED_2); LedOn(LED_3);
-            }
-        } else {
-            // Si no mide, apaga todos los LEDs
-            LedOff(LED_1); LedOff(LED_2); LedOff(LED_3);
+        // ---- Envío de distancia ----
+        if(medir && !hold){
+            snprintf(msg, sizeof(msg), "%03d cm\r\n", distancia);
+            UartSendString(UART_PC, msg);
         }
-        vTaskDelay(100 / portTICK_PERIOD_MS); // Refresco rápido de LEDs
+
+        // ---- Recepción de comandos ----
+        if(UartReadByte(UART_PC, &rxByte)){
+            if(rxByte == 'O' || rxByte == 'o'){   // ON/OFF
+                medir = !medir;
+            } else if(rxByte == 'H' || rxByte == 'h'){ // HOLD
+                hold = !hold;
+            }
+        }
+
+        vTaskDelay(200 / portTICK_PERIOD_MS); // Refresco de UART
     }
-}*/
+}
 
 /*==================[external functions definition]==========================*/
 void app_main(void){
@@ -131,6 +118,15 @@ void app_main(void){
     SwitchesInit();
     LcdItsE0803Init();
     HcSr04Init(GPIO_3, GPIO_2);   // ECHO=GPIO_3, TRIG=GPIO_2
+
+    // Configuración UART
+    serial_config_t uart_pc = {
+        .port = UART_PC,
+        .baud_rate = UART_BAUDRATE,
+        .func_p = UART_NO_INT,   // Sin interrupción de recepción, polling
+        .param_p = NULL
+    };
+    UartInit(&uart_pc);
 
     // Configuración de interrupciones de teclas
     SwitchActivInt(SWITCH_1, CallbackTec1, NULL);
@@ -147,7 +143,7 @@ void app_main(void){
 
     // Creación de tareas
     xTaskCreate(MedirDistanciaTask, "MedirDist", 2048, NULL, 5, &medir_task_handle);
-    //xTaskCreate(ControlLedsTask,   "CtrlLeds",  1024, NULL, 5, NULL);
+    xTaskCreate(UartTask,          "UartTask",  2048, NULL, 5, NULL);
 
     // Arranque del timer
     TimerStart(timer_medicion.timer);

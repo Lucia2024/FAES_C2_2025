@@ -47,6 +47,7 @@
  *  - selPins[1] -> GPIO_18 = SEL_DIGIT2
  *  - selPins[2] -> GPIO_9  = SEL_DIGIT3  (digit 3, LSB position)
  */
+/*==================[inclusions]=============================================*/
 #include "gpio_mcu.h"
 #include <stdint.h>
 #include <stdbool.h>
@@ -133,7 +134,7 @@ int8_t displayNumber(uint32_t data, uint8_t digits, gpioConf_t *bcdPins, gpioCon
 
 /*==================[external functions definition]==========================*/
 void app_main(void){
-	    // Definir mapeo de pines BCD (D1..D4)
+	// Definir mapeo de pines BCD (D1..D4)
     gpioConf_t bcdPins[4] = {
         {GPIO_20, GPIO_OUTPUT}, // D1 <- b0 (LSB)
         {GPIO_21, GPIO_OUTPUT}, // D2 <- b1
@@ -162,9 +163,7 @@ void app_main(void){
     // Ejemplo: mostrar 123 en los 3 dígitos
     displayNumber(123, 3, bcdPins, selPins);
 
-    // Si querés que se vea indefinidamente y no haya riesgo de que algo reseteé,
-    // podés llamar displayNumber periódicamente (no es necesario si el latch
-    // mantiene los valores).
+    // Si querés que se vea indefinidamente y no haya riesgo de que algo resetée
     while (1) {
         vTaskDelay(pdMS_TO_TICKS(10000));
     }
