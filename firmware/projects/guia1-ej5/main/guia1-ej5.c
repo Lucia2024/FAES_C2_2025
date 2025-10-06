@@ -7,7 +7,7 @@
  * 
  * Defina un vector que mapee los bits de la siguiente manera:
  * b0 -> GPIO_20 
- * b1 ->  GPIO_21 
+ * b1 -> GPIO_21 
  * b2 -> GPIO_22 
  * b3 -> GPIO_23 
  * La función deberá cambiar el estado de cada GPIO, a ‘0’ o a ‘1’, según el estado del bit 
@@ -35,6 +35,7 @@
 #include <stdint.h>
 #include "gpio_mcu.h"
 /*==================[macros and definitions]=================================*/
+
 /*==================[internal data definition]===============================*/
 typedef struct {
     gpio_t pin;   /*!< GPIO pin number */
@@ -45,7 +46,7 @@ typedef struct {
 // Función que escribe un dígito BCD en los GPIO
 void bcdToGpio(uint8_t bcd_digit, gpioConf_t *pins) {
     for (int i = 0; i < 4; i++) {
-        if((bcd_digit&(1<<i))==0){
+        if((bcd_digit&(1<<i))==0){ //mascara para evaluar cada bit
             GPIOOff(pins[i].pin);
         }
         else GPIOOn(pins[i].pin);
@@ -67,6 +68,6 @@ void app_main(void){
         GPIOInit(bcdPins[i].pin, bcdPins[i].dir);
     }
 
-    bcdToGpio(6, bcdPins);
+    bcdToGpio(6, bcdPins); //llama a la funcion dando el digito y el arreglo de pines
 }
 /*==================[end of file]============================================*/

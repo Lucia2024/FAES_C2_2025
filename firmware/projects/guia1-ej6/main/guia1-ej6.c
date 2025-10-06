@@ -14,10 +14,17 @@
  * 
  * @section hardConn Hardware Connection
  *
- * |    Peripheral  |   ESP32   	|
+ * |    EDU-ESP     |   Peripheral  |
  * |:--------------:|:--------------|
- * | 	PIN_X	 	| 	GPIO_X		|
- *
+ * |    GPIO_20     |     D1        |
+ * |    GPIO_21     |     D2        |
+ * |    GPIO_22     |     D3        |
+ * |    GPIO_23     |     D4        |
+ * |    GPIO_19     |     SEL_1     |
+ * |    GPIO_18     |     SEL_2     |
+ * |    GPIO_9      |     SEL_3     |
+ * |    +5V         |     +5V       |
+ * |    GND         |     GND       |
  *
  * @section changelog Changelog
  *
@@ -27,9 +34,7 @@
  *
  * @author Lucia Faes (luchifaess@gmail.com)
  *
- */
-
-/*==================[inclusions]=============================================*/
+ *
 /**
  * Ejercicio 6 - Mostrar un entero en la placa LCD (CD4543 + 3 selects)
  *
@@ -76,7 +81,8 @@ typedef struct {
  * Ejemplo: data=123, digits=3 -> bcd_number[0]=1, [1]=2, [2]=3
  */
 int8_t convertToBcdArray(uint32_t data, uint8_t digits, uint8_t *bcd_number) {
-    if (digits == 0 || bcd_number == NULL) return -1;
+    if (digits == 0 || bcd_number == NULL) return -1; //Si dígitos es 0 o bcd_number no apunta a una dirección válida retorno error
+
     // Rellenamos desde la derecha (LSB) y quedarán MSB-first en el arreglo.
     for (int i = digits - 1; i >= 0; i--) {
         bcd_number[i] = data % 10;
@@ -94,8 +100,11 @@ int8_t convertToBcdArray(uint32_t data, uint8_t digits, uint8_t *bcd_number) {
  */
 void bcdToGpio(uint8_t bcd_digit, gpioConf_t *pins) {
     for (int i = 0; i < 4; i++) {
-        bool bit = ((bcd_digit >> i) & 0x01) ? true : false;
-        GPIOState(pins[i].pin, bit);
+        if((bcd_digit&(1<<i))==0){ //mascara para evaluar cada bit
+            GPIOOff(pins[i].pin);
+        }
+        else GPIOOn(pins[i].pin);
+        
     }
 }
 
@@ -157,11 +166,12 @@ void app_main(void){
     }
     for (int i = 0; i < MAX_LCD_DIGITS; i++) {
         GPIOInit(selPins[i].pin, selPins[i].dir);
+        // Opcional: dejar BCD en 0 al inicio
         GPIOOff(selPins[i].pin);
     }
 
     // Ejemplo: mostrar 123 en los 3 dígitos
-    displayNumber(123, 3, bcdPins, selPins);
+    displayNumber(123, MAX_LCD_DIGITS, bcdPins, selPins);
 
     // Si querés que se vea indefinidamente y no haya riesgo de que algo resetée
     while (1) {

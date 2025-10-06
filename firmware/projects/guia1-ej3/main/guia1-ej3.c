@@ -86,7 +86,7 @@ void app_main(void) {
     my_leds.mode = LED_TOGGLE;
     my_leds.n_led = LED_1;
     my_leds.n_ciclos = 10;    // 10 ciclos
-    my_leds.periodo = 5000;    // PERIODO ms, puse 5000 porque habia un problema con el osciloscopio
+    my_leds.periodo = 5000;    // PERIODO ms
 
     ledControl(&my_leds);
 }

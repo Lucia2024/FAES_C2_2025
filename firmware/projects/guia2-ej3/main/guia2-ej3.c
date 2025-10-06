@@ -53,7 +53,6 @@ void CallbackTec1(void *args);
 void CallbackTec2(void *args);
 void FuncTimerMedicion(void* param);
 static void MedirDistanciaTask(void *pvParameter);
-static void UartTask(void *pvParameter);
 
 /*==================[internal functions definition]==========================*/
 void CallbackTec1(void *args){
@@ -72,33 +71,24 @@ void FuncTimerMedicion(void* param){
 }
 
 static void MedirDistanciaTask(void *pvParameter){
-    while(true){
-        // Espera hasta recibir notificación del timer
-        ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
-
-        // Solo mide si está habilitado y no en hold
-        if(medir && !hold){
-            distancia = HcSr04ReadDistanceInCentimeters();
-            LcdItsE0803Write(distancia); // Muestra valor en display 7 segmentos
-        }
-    }
-}
-
-/**
- * @brief Tarea que envía la distancia por UART y recibe comandos desde la PC
- */
-static void UartTask(void *pvParameter){
     char msg[32];
     uint8_t rxByte;
 
     while(true){
-        // ---- Envío de distancia ----
+        // Espera hasta recibir notificación del timer
+        ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
+
+        // ---- Medición y display ----
         if(medir && !hold){
+            distancia = HcSr04ReadDistanceInCentimeters();
+            LcdItsE0803Write(distancia); // Mostrar en display
+
+            // Enviar por UART
             snprintf(msg, sizeof(msg), "%03d cm\r\n", distancia);
             UartSendString(UART_PC, msg);
         }
 
-        // ---- Recepción de comandos ----
+        // ---- Recepción de comandos por UART ----
         if(UartReadByte(UART_PC, &rxByte)){
             if(rxByte == 'O' || rxByte == 'o'){   // ON/OFF
                 medir = !medir;
@@ -107,7 +97,20 @@ static void UartTask(void *pvParameter){
             }
         }
 
-        vTaskDelay(200 / portTICK_PERIOD_MS); // Refresco de UART
+        // ---- Control de LEDs ----
+        if(medir && !hold){
+            if(distancia < 10){
+                LedOff(LED_1); LedOff(LED_2); LedOff(LED_3);
+            } else if(distancia < 20){
+                LedOn(LED_1); LedOff(LED_2); LedOff(LED_3);
+            } else if(distancia < 30){
+                LedOn(LED_1); LedOn(LED_2); LedOff(LED_3);
+            } else {
+                LedOn(LED_1); LedOn(LED_2); LedOn(LED_3);
+            }
+        } else {
+            LedOff(LED_1); LedOff(LED_2); LedOff(LED_3);
+        }
     }
 }
 
@@ -123,12 +126,12 @@ void app_main(void){
     serial_config_t uart_pc = {
         .port = UART_PC,
         .baud_rate = UART_BAUDRATE,
-        .func_p = UART_NO_INT,   // Sin interrupción de recepción, polling
+        .func_p = UART_NO_INT,   // Usamos polling
         .param_p = NULL
     };
     UartInit(&uart_pc);
 
-    // Configuración de interrupciones de teclas
+    // Configuración de interrupciones de teclas físicas
     SwitchActivInt(SWITCH_1, CallbackTec1, NULL);
     SwitchActivInt(SWITCH_2, CallbackTec2, NULL);
 
@@ -141,9 +144,8 @@ void app_main(void){
     };
     TimerInit(&timer_medicion);
 
-    // Creación de tareas
-    xTaskCreate(MedirDistanciaTask, "MedirDist", 2048, NULL, 5, &medir_task_handle);
-    xTaskCreate(UartTask,          "UartTask",  2048, NULL, 5, NULL);
+    // Crear **única tarea** (medición + UART + LEDs)
+    xTaskCreate(MedirDistanciaTask, "MedirDist", 4096, NULL, 5, &medir_task_handle);
 
     // Arranque del timer
     TimerStart(timer_medicion.timer);
