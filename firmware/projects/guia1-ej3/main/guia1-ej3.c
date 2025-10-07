@@ -69,7 +69,7 @@ void ledControl(leds_t * my_leds) {
         case LED_TOGGLE:
             for(i = 0; i < my_leds->n_ciclos; i++) {
                 LedToggle(my_leds->n_led);          // cambio de estado
-                vTaskDelay(my_leds->periodo /CONFIG_BLINK_PERIOD); // periodo expresado en múltiplos de 100ms
+                vTaskDelay(my_leds->periodo /portTICK_PERIOD_MS); //o vTaskDelay(CONFIG_BLINK_PERIOD /portTICK_PERIOD_MS)
             }
             break;
 
@@ -86,7 +86,7 @@ void app_main(void) {
     my_leds.mode = LED_TOGGLE;
     my_leds.n_led = LED_1;
     my_leds.n_ciclos = 10;    // 10 ciclos
-    my_leds.periodo = 5000;    // PERIODO ms
+    my_leds.periodo = 500;    // PERIODO ms
 
     ledControl(&my_leds);
 }

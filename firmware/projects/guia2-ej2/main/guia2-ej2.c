@@ -1,4 +1,4 @@
-/*! @mainpage Template
+/*! @mainpage Guia 2. Ejercicio 2
  *
  * @section genDesc General Description
  *
