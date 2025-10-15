@@ -56,31 +56,31 @@
 #define UART_BAUDRATE 115200
 
 /*==================[internal data definition]===============================*/
-bool tecla1 = false;   // Control de medición (ON/OFF)
-bool tecla2 = false;   // Control de HOLD
-TaskHandle_t dist_task_handle = NULL;
+bool medir = false;   // Control de medición (ON/OFF)
+bool hold = false;   // Control de HOLD
+TaskHandle_t medir_task_handle = NULL;
 
 /*==================[internal functions declaration]=========================*/
 
 /**
  * @brief Handler de interrupción de la tecla 1 (TEC1)
  */
-void Tecla1Handler(void *param){
-    tecla1 = !tecla1;   // Activa o detiene la medición
+void medirHandler(){
+ medir = !medir;   // Activa o detiene la medición
 }
 
 /**
  * @brief Handler de interrupción de la tecla 2 (TEC2)
  */
-void Tecla2Handler(void *param){
-    tecla2 = !tecla2;   // Activa o desactiva el HOLD
+void holHandler(){
+    hold = !hold;   // Activa o desactiva el HOLD
 }
 
 /**
  * @brief Handler de interrupción del timer (cada 1s)
  */
 void TimerDistHandler(void *param){
-    vTaskNotifyGiveFromISR(dist_task_handle, pdFALSE);
+    vTaskNotifyGiveFromISR(medir_task_handle, pdFALSE);
 }
 
 /** 
@@ -93,10 +93,10 @@ void UartRxHandler(void *param){
 
     switch(data){
         case 'o':
-            Tecla1Handler();
+            medirHandler();
             break;
         case 'h':
-            Tecla2Handler();
+            holHandler();
             break;
     }
 }
@@ -104,20 +104,19 @@ void UartRxHandler(void *param){
 /**
  * @brief Tarea principal: mide distancia y controla LEDs + LCD
  */
-void distanciasTask(void *pvParameter){
+void MedirDistanciaTask(void *pvParameter){
     uint8_t distancia;
 
     while(true){
         // Espera la notificación del timer
         ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
 
-        if(tecla1){  // Si la medición está activada
+        if (medir){  // Si la medición está activada
             distancia = HcSr04ReadDistanceInCentimeters();
 
-            if(!tecla2){   // Si no está en HOLD
+            if(!hold){   // Si no está en HOLD
                 LcdItsE0803Write(distancia);
             }
-
             // Formato UART: 3 dígitos + espacio + "cm" + \r\n
             UartSendString(UART_PC, (char *)UartItoa(distancia, 10)); // Lo que mido, lo convierto a string y lo muestro en la PC
 			UartSendString(UART_PC, " cm\n\r");
@@ -158,8 +157,8 @@ void app_main(void){
     SwitchesInit();
 
     // Configuración de interrupciones de teclas
-    SwitchActivInt(SWITCH_1, &Tecla1Handler, NULL);
-    SwitchActivInt(SWITCH_2, &Tecla2Handler, NULL);
+    SwitchActivInt(SWITCH_1,  medirHandler, NULL);
+    SwitchActivInt(SWITCH_2, &holHandler, NULL);
 
     // Configuración de timer para refresco cada 1s
     timer_config_t timer_dist = {
@@ -178,7 +177,7 @@ void app_main(void){
 	UartInit(&my_uart);
 
     // Creación de la tarea de medición
-    xTaskCreate(&distanciasTask, "dist_task", 512, NULL, 5, &dist_task_handle);
+    xTaskCreate(&MedirDistanciaTask, "dist_task", 512, NULL, 5, &medir_task_handle);
 
     // Arranque del timer
     TimerStart(timer_dist.timer);

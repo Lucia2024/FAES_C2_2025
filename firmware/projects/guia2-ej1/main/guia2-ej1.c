@@ -1,4 +1,4 @@
-/*! @mainpage Blinking
+/*! @mainpage Guia 2. Ejercicio1
  *
  * \section genDesc General Description
  *
@@ -14,6 +14,16 @@
  * Usar TEC1 para activar y detener la medición.
  * Usar TEC2 para mantener el resultado (“HOLD”).
  * Refresco de medición: 1 s
+ * 
+ * @section hardConn Hardware Connection
+ *
+ * |    Peripheral  |   ESP32   	|
+ * |:--------------:|:--------------|
+ * | 	ECHO	 	| 	GPIO_3		|
+ * |    TRIGGER     |   GPIO_2      |
+ * |    +5V         |   +5V         |
+ * |    GND         |   GND         |
+ *
  * 
  * @section changelog Changelog
  *
